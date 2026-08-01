@@ -1,6 +1,6 @@
 # react-patternify
 
-Animated canvas background patterns for React.
+Animated canvas background patterns for React. Drop a component into your layout and get a self-contained, GPU-friendly animated background, no dependencies beyond React, no DOM overhead, fully customizable via props.
 
 ## Install
 
@@ -8,7 +8,13 @@ Animated canvas background patterns for React.
 npm install react-patternify
 ```
 
-## Usage
+## Components
+
+### `TetrisSkyline`
+
+An animated Tetris-inspired cityscape. Tetromino pieces spawn at the top of the viewport and fall onto a procedurally generated skyline terrain. When a column grows too tall the blocks fade out and the terrain resets, keeping the animation running indefinitely.
+
+The canvas is fixed, full-viewport, placed behind your content (`z-index: -1`, `pointer-events: none`, `aria-hidden`), so it works as a drop-in background with no layout impact.
 
 ```tsx
 import { TetrisSkyline } from 'react-patternify'
@@ -23,27 +29,27 @@ export default function App() {
 }
 ```
 
-> **Next.js App Router**: the components are already marked `"use client"` in the bundle.
+> **Next.js App Router**: the components are already marked `"use client"` in the bundle — no wrapper needed.
 
-## Props — TetrisSkyline
+#### Props
 
-| Prop                | Type       | Default                             | Description                              |
-| ------------------- | ---------- | ----------------------------------- | ---------------------------------------- |
-| `palette`           | `string[]` | `['#ff2d6d', '#a855f7', '#60a5fa']` | Block colors                             |
-| `bg`                | `string`   | `'#0b1220'`                         | Background fill color                    |
-| `gridLine`          | `string`   | `'transparent'`                     | Cell border color                        |
-| `minCell`           | `number`   | `16`                                | Min auto cell size (px)                  |
-| `maxCell`           | `number`   | `24`                                | Max auto cell size (px)                  |
-| `preferredCell`     | `number`   | `20`                                | Preferred cell size (px)                 |
-| `cellGap`           | `number`   | `3`                                 | Gap between cells (px)                   |
-| `pieceDropMs`       | `number`   | `90`                                | Drop interval per cell (ms)              |
-| `spawnEveryMs`      | `number`   | `520`                               | Spawn interval (ms)                      |
-| `maxActivePieces`   | `number`   | `7`                                 | Max pieces in air                        |
-| `terrainPx`         | `number`   | `300`                               | Target baseline terrain height (px)      |
-| `terrainMinRatio`   | `number`   | `0.28`                              | Min terrain as fraction of viewport      |
-| `terrainMaxRatio`   | `number`   | `0.55`                              | Max terrain as fraction of viewport      |
-| `terrainRoughness`  | `number`   | `2`                                 | Skyline jaggedness                       |
-| `holeChance`        | `number`   | `0.008`                             | Probability of interior holes            |
-| `topChipsChance`    | `number`   | `0.05`                              | Probability of surface chips             |
-| `triggerTopRows`    | `number`   | `2`                                 | Column reset when stack reaches this row |
-| `columnClearAnimMs` | `number`   | `260`                               | Column reset animation duration (ms)     |
+| Prop                | Type       | Default                             | Description                                                  |
+| ------------------- | ---------- | ----------------------------------- | ------------------------------------------------------------ |
+| `palette`           | `string[]` | `['#ff2d6d', '#a855f7', '#60a5fa']` | Block colors, cycled across pieces                           |
+| `bg`                | `string`   | `'#0b1220'`                         | Canvas background fill                                       |
+| `gridLine`          | `string`   | `'transparent'`                     | Cell border color                                            |
+| `minCell`           | `number`   | `16`                                | Minimum auto-calculated cell size (px)                       |
+| `maxCell`           | `number`   | `24`                                | Maximum auto-calculated cell size (px)                       |
+| `preferredCell`     | `number`   | `20`                                | Target cell size; clamped to min/max to minimize edge gaps   |
+| `cellGap`           | `number`   | `3`                                 | Gap between cells (px)                                       |
+| `pieceDropMs`       | `number`   | `90`                                | Time per one-cell drop (ms) — lower is faster                |
+| `spawnEveryMs`      | `number`   | `520`                               | Interval between new piece spawns (ms)                       |
+| `maxActivePieces`   | `number`   | `7`                                 | Max pieces falling at once                                   |
+| `terrainPx`         | `number`   | `300`                               | Target terrain height from the bottom (px)                   |
+| `terrainMinRatio`   | `number`   | `0.28`                              | Minimum terrain height as a fraction of viewport height      |
+| `terrainMaxRatio`   | `number`   | `0.55`                              | Maximum terrain height as a fraction of viewport height      |
+| `terrainRoughness`  | `number`   | `2`                                 | Skyline jaggedness — higher values create more variation     |
+| `holeChance`        | `number`   | `0.008`                             | Per-cell probability of an interior hole in the terrain      |
+| `topChipsChance`    | `number`   | `0.05`                              | Per-cell probability of a surface notch on the terrain       |
+| `triggerTopRows`    | `number`   | `2`                                 | Stack height (in rows from top) that triggers a column reset |
+| `columnClearAnimMs` | `number`   | `260`                               | Duration of the column fade-out animation (ms)               |

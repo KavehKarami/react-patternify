@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { defineConfig } from 'tsup'
 import { readFileSync, writeFileSync } from 'fs'
 
