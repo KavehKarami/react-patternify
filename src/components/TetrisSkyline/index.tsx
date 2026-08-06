@@ -7,7 +7,7 @@ type Piece = {
   color: string
   x: number
   y: number
-  m: number[][]
+  matrix: number[][]
 }
 
 const SHAPES: number[][][] = [
@@ -64,32 +64,34 @@ const SHAPES: number[][][] = [
 
 const DEFAULT_PALETTE = ['#ff2d6d', '#a855f7', '#60a5fa']
 
-const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
+const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value))
 const randInt = (max: number) => (Math.random() * max) | 0
 
-function rotateCW(m: number[][]): number[][] {
-  const n = m.length
-  const r = Array.from({ length: n }, () => Array(n).fill(0) as number[])
-  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) r[j][n - 1 - i] = m[i][j]
-  return r
+function rotateCW(matrix: number[][]): number[][] {
+  const size = matrix.length
+  const rotated = Array.from({ length: size }, () => Array(size).fill(0) as number[])
+  for (let row = 0; row < size; row++)
+    for (let col = 0; col < size; col++) rotated[col][size - 1 - row] = matrix[row][col]
+  return rotated
 }
 
 function pickCellSize(w: number, h: number, min: number, max: number, preferred: number): number {
   let best = preferred
   let bestScore = Infinity
-  for (let c = min; c <= max; c++) {
-    const score = (w % c) + (h % c) + Math.abs(c - preferred) * 1.25
+  for (let candidate = min; candidate <= max; candidate++) {
+    const score = (w % candidate) + (h % candidate) + Math.abs(candidate - preferred) * 1.25
     if (score < bestScore) {
       bestScore = score
-      best = c
+      best = candidate
     }
   }
   return best
 }
 
-const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
+const easeOutCubic = (progress: number) => 1 - Math.pow(1 - progress, 3)
 
 export function TetrisSkyline({
+  contained = false,
   minCell = 16,
   maxCell = 24,
   preferredCell = 20,
@@ -122,69 +124,77 @@ export function TetrisSkyline({
     let rows = 0
     let offsetX = 0
     let offsetY = 0
+    let canvasW = 0
+    let canvasH = 0
     let baseline: Cell[][] = []
     let settled: Cell[][] = []
     let pieces: Piece[] = []
     const clearing = new Map<number, number>()
-    let rafId = 0
-    let prevTs = performance.now()
-    let dropAcc = 0
-    let spawnAcc = 0
+    let animationFrameId = 0
+    let prevTimestamp = performance.now()
+    let dropAccumulator = 0
+    let spawnAccumulator = 0
 
     const makeGrid = (): Cell[][] => Array.from({ length: rows }, () => Array.from({ length: cols }, () => 0 as Cell))
 
     const buildTerrain = (grid: Cell[][]) => {
-      const vh = window.innerHeight
       const targetRows = Math.round(terrainPx / cellSize)
-      const minRows = Math.round((vh * terrainMinRatio) / cellSize)
-      const maxRows = Math.round((vh * terrainMaxRatio) / cellSize)
+      const minRows = Math.round((canvasH * terrainMinRatio) / cellSize)
+      const maxRows = Math.round((canvasH * terrainMaxRatio) / cellSize)
       const terrainRows = clamp(targetRows, minRows, maxRows)
       const heights: number[] = new Array(cols)
       const minH = Math.max(4, Math.round(terrainRows * 0.55))
       const maxH = Math.max(minH + 2, Math.round(terrainRows * 1.1))
 
       heights[0] = clamp(Math.round((minH + maxH) / 2), minH, maxH)
-      for (let c = 1; c < cols; c++) {
+      for (let col = 1; col < cols; col++) {
         const step = randInt(terrainRoughness * 2 + 1) - terrainRoughness
-        heights[c] = clamp(heights[c - 1] + step, minH, maxH)
+        heights[col] = clamp(heights[col - 1] + step, minH, maxH)
       }
 
-      for (let c = 0; c < cols; c++) {
-        const h = heights[c]
-        const startRow = rows - h
-        for (let r = startRow; r < rows; r++) grid[r][c] = palette[randInt(palette.length)]
-        for (let i = 0; i < 2; i++) {
-          const r = startRow + i
-          if (r >= 0 && r < rows && Math.random() < topChipsChance) grid[r][c] = 0
+      for (let col = 0; col < cols; col++) {
+        const columnHeight = heights[col]
+        const startRow = rows - columnHeight
+        for (let row = Math.max(0, startRow); row < rows; row++) grid[row][col] = palette[randInt(palette.length)]
+        for (let chipOffset = 0; chipOffset < 2; chipOffset++) {
+          const row = startRow + chipOffset
+          if (row >= 0 && row < rows && Math.random() < topChipsChance) grid[row][col] = 0
         }
-        for (let r = startRow + 2; r < rows - 1; r++) {
+        for (let row = Math.max(0, startRow + 2); row < rows - 1; row++) {
           if (Math.random() < holeChance) {
-            grid[r][c] = 0
-            if (Math.random() < 0.35 && c + 1 < cols) grid[r][c + 1] = 0
+            grid[row][col] = 0
+            if (Math.random() < 0.35 && col + 1 < cols) grid[row][col + 1] = 0
           }
         }
       }
     }
 
-    const cloneGrid = (g: Cell[][]): Cell[][] => g.map((row) => row.slice())
+    const cloneGrid = (grid: Cell[][]): Cell[][] => grid.map((row) => row.slice())
 
     const resize = () => {
-      const dpr = Math.max(1, window.devicePixelRatio || 1)
-      const vw = window.innerWidth
-      const vh = window.innerHeight
+      const pixelRatio = Math.max(1, window.devicePixelRatio || 1)
 
-      canvas.style.width = `${vw}px`
-      canvas.style.height = `${vh}px`
-      canvas.width = Math.floor(vw * dpr)
-      canvas.height = Math.floor(vh * dpr)
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      if (contained) {
+        const parent = canvas.parentElement
+        canvasW = parent ? parent.clientWidth : canvas.offsetWidth
+        canvasH = parent ? parent.clientHeight : canvas.offsetHeight
+      } else {
+        canvasW = window.innerWidth
+        canvasH = window.innerHeight
+        canvas.style.width = `${canvasW}px`
+        canvas.style.height = `${canvasH}px`
+      }
+
+      canvas.width = Math.floor(canvasW * pixelRatio)
+      canvas.height = Math.floor(canvasH * pixelRatio)
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
       ctx.imageSmoothingEnabled = false
 
-      cellSize = pickCellSize(vw, vh, minCell, maxCell, preferredCell)
-      cols = Math.max(12, Math.floor(vw / cellSize))
-      rows = Math.max(18, Math.floor(vh / cellSize))
-      offsetX = Math.floor((vw - cols * cellSize) / 2)
-      offsetY = Math.floor(vh - rows * cellSize)
+      cellSize = pickCellSize(canvasW, canvasH, minCell, maxCell, preferredCell)
+      cols = Math.max(12, Math.floor(canvasW / cellSize))
+      rows = Math.max(18, Math.floor(canvasH / cellSize))
+      offsetX = Math.floor((canvasW - cols * cellSize) / 2)
+      offsetY = Math.floor(canvasH - rows * cellSize)
 
       baseline = makeGrid()
       buildTerrain(baseline)
@@ -193,114 +203,112 @@ export function TetrisSkyline({
       pieces = []
     }
 
-    const collides = (p: Piece, dy: number) => {
-      for (let r = 0; r < 4; r++) {
-        for (let c = 0; c < 4; c++) {
-          if (!p.m[r][c]) continue
-          const gc = p.x + c
-          const gr = p.y + r + dy
-          if (gc < 0 || gc >= cols || gr >= rows) return true
-          if (gr < 0) continue
-          if (settled[gr][gc]) return true
+    const collides = (piece: Piece, deltaRow: number) => {
+      for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+          if (!piece.matrix[row][col]) continue
+          const gridCol = piece.x + col
+          const gridRow = piece.y + row + deltaRow
+          if (gridCol < 0 || gridCol >= cols || gridRow >= rows) return true
+          if (gridRow < 0) continue
+          if (settled[gridRow][gridCol]) return true
         }
       }
       return false
     }
 
-    const lock = (p: Piece) => {
-      for (let r = 0; r < 4; r++) {
-        for (let c = 0; c < 4; c++) {
-          if (!p.m[r][c]) continue
-          const gc = p.x + c
-          const gr = p.y + r
-          if (gr >= 0 && gr < rows && gc >= 0 && gc < cols) settled[gr][gc] = p.color
+    const lock = (piece: Piece) => {
+      for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+          if (!piece.matrix[row][col]) continue
+          const gridCol = piece.x + col
+          const gridRow = piece.y + row
+          if (gridRow >= 0 && gridRow < rows && gridCol >= 0 && gridCol < cols) settled[gridRow][gridCol] = piece.color
         }
       }
     }
 
-    const topRowInCol = (c: number) => {
-      for (let r = 0; r < rows; r++) if (settled[r][c]) return r
+    const topRowInCol = (col: number) => {
+      for (let row = 0; row < rows; row++) if (settled[row][col]) return row
       return Infinity
     }
 
     const markClearing = () => {
       const band = clamp(triggerTopRows, 1, Math.max(1, rows - 1))
-      for (let c = 0; c < cols; c++) {
-        if (clearing.has(c)) continue
-        if (topRowInCol(c) <= band) clearing.set(c, 0)
+      for (let col = 0; col < cols; col++) {
+        if (clearing.has(col)) continue
+        if (topRowInCol(col) <= band) clearing.set(col, 0)
       }
     }
 
     const applyResets = () => {
       if (clearing.size === 0) return
-      for (const [c, p] of clearing) {
-        if (p >= 1) {
-          for (let r = 0; r < rows; r++) settled[r][c] = baseline[r][c]
-          clearing.delete(c)
+      for (const [col, progress] of clearing) {
+        if (progress >= 1) {
+          for (let row = 0; row < rows; row++) settled[row][col] = baseline[row][col]
+          clearing.delete(col)
         }
       }
     }
 
     const spawnPiece = () => {
-      let m = SHAPES[randInt(SHAPES.length)].map((r) => r.slice())
-      const rots = randInt(4)
-      for (let i = 0; i < rots; i++) m = rotateCW(m)
+      let matrix = SHAPES[randInt(SHAPES.length)].map((row) => row.slice())
+      const rotations = randInt(4)
+      for (let rotationStep = 0; rotationStep < rotations; rotationStep++) matrix = rotateCW(matrix)
       pieces.push({
         color: palette[randInt(palette.length)],
         x: clamp(randInt(cols), 0, cols - 4),
         y: -4,
-        m,
+        matrix,
       })
     }
 
-    const drawCell = (c: number, r: number, color: string, alpha = 1, scale = 1) => {
-      const x = offsetX + c * cellSize
-      const y = offsetY + r * cellSize
+    const drawCell = (col: number, row: number, color: string, alpha = 1, scale = 1) => {
+      const x = offsetX + col * cellSize
+      const y = offsetY + row * cellSize
       const base = cellSize - cellGap
       const size = base * scale
-      const cx = x + base / 2
-      const cy = y + base / 2
+      const centerX = x + base / 2
+      const centerY = y + base / 2
 
       ctx.globalAlpha = alpha
       ctx.fillStyle = color
-      ctx.fillRect(cx - size / 2, cy - size / 2, size, size)
+      ctx.fillRect(centerX - size / 2, centerY - size / 2, size, size)
       ctx.strokeStyle = gridLine
       ctx.lineWidth = 1
-      ctx.strokeRect(cx - size / 2 + 0.5, cy - size / 2 + 0.5, size - 1, size - 1)
+      ctx.strokeRect(centerX - size / 2 + 0.5, centerY - size / 2 + 0.5, size - 1, size - 1)
       ctx.globalAlpha = 1
     }
 
     const render = () => {
-      const vw = window.innerWidth
-      const vh = window.innerHeight
       ctx.fillStyle = bg
-      ctx.fillRect(0, 0, vw, vh)
+      ctx.fillRect(0, 0, canvasW, canvasH)
 
       const easedClearing = new Map<number, number>()
-      for (const [c, p] of clearing) easedClearing.set(c, easeOutCubic(p))
+      for (const [col, progress] of clearing) easedClearing.set(col, easeOutCubic(progress))
 
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const color = settled[r][c]
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const color = settled[row][col]
           if (!color) continue
-          const ep = easedClearing.get(c)
-          if (ep === undefined) {
-            drawCell(c, r, color)
+          const easedProgress = easedClearing.get(col)
+          if (easedProgress === undefined) {
+            drawCell(col, row, color)
             continue
           }
-          const wipe = clamp(r / Math.max(1, rows - 1) + 0.15, 0, 1)
-          const lp = clamp((ep - wipe * 0.25) / 0.75, 0, 1)
-          drawCell(c, r, color, 1 - lp, 1 - 0.45 * lp)
+          const wipe = clamp(row / Math.max(1, rows - 1) + 0.15, 0, 1)
+          const linearProgress = clamp((easedProgress - wipe * 0.25) / 0.75, 0, 1)
+          drawCell(col, row, color, 1 - linearProgress, 1 - 0.45 * linearProgress)
         }
       }
 
-      for (const p of pieces) {
-        for (let r = 0; r < 4; r++) {
-          for (let c = 0; c < 4; c++) {
-            if (!p.m[r][c]) continue
-            const gr = p.y + r
-            const gc = p.x + c
-            if (gr >= 0) drawCell(gc, gr, p.color)
+      for (const piece of pieces) {
+        for (let row = 0; row < 4; row++) {
+          for (let col = 0; col < 4; col++) {
+            if (!piece.matrix[row][col]) continue
+            const gridRow = piece.y + row
+            const gridCol = piece.x + col
+            if (gridRow >= 0) drawCell(gridCol, gridRow, piece.color)
           }
         }
       }
@@ -308,50 +316,60 @@ export function TetrisSkyline({
 
     const tick = () => {
       const next: Piece[] = []
-      for (const p of pieces) {
-        if (!collides(p, 1)) {
-          p.y += 1
-          next.push(p)
-        } else lock(p)
+      for (const piece of pieces) {
+        if (!collides(piece, 1)) {
+          piece.y += 1
+          next.push(piece)
+        } else lock(piece)
       }
       pieces = next
       markClearing()
     }
 
-    const loop = (ts: number) => {
-      const dt = ts - prevTs
-      prevTs = ts
+    const loop = (timestamp: number) => {
+      const deltaTime = timestamp - prevTimestamp
+      prevTimestamp = timestamp
 
       if (clearing.size > 0) {
-        const dp = dt / columnClearAnimMs
-        for (const [c, p] of clearing) clearing.set(c, Math.min(1, p + dp))
+        const deltaProgress = deltaTime / columnClearAnimMs
+        for (const [col, progress] of clearing) clearing.set(col, Math.min(1, progress + deltaProgress))
         applyResets()
       }
 
-      dropAcc += dt
-      spawnAcc += dt
+      dropAccumulator += deltaTime
+      spawnAccumulator += deltaTime
 
-      while (spawnAcc >= spawnEveryMs) {
-        spawnAcc -= spawnEveryMs
+      while (spawnAccumulator >= spawnEveryMs) {
+        spawnAccumulator -= spawnEveryMs
         if (pieces.length < maxActivePieces) spawnPiece()
       }
-      while (dropAcc >= pieceDropMs) {
-        dropAcc -= pieceDropMs
+      while (dropAccumulator >= pieceDropMs) {
+        dropAccumulator -= pieceDropMs
         tick()
       }
 
       render()
-      rafId = requestAnimationFrame(loop)
+      animationFrameId = requestAnimationFrame(loop)
     }
 
     resize()
-    window.addEventListener('resize', resize)
-    for (let i = 0; i < Math.min(3, maxActivePieces); i++) spawnPiece()
-    rafId = requestAnimationFrame(loop)
+
+    let cleanupResize: () => void
+    if (contained) {
+      const resizeObserver = new ResizeObserver(resize)
+      resizeObserver.observe(canvas.parentElement ?? canvas)
+      cleanupResize = () => resizeObserver.disconnect()
+    } else {
+      window.addEventListener('resize', resize)
+      cleanupResize = () => window.removeEventListener('resize', resize)
+    }
+
+    for (let index = 0; index < Math.min(3, maxActivePieces); index++) spawnPiece()
+    animationFrameId = requestAnimationFrame(loop)
 
     return () => {
-      cancelAnimationFrame(rafId)
-      window.removeEventListener('resize', resize)
+      cancelAnimationFrame(animationFrameId)
+      cleanupResize()
     }
   }, [
     minCell,
@@ -372,13 +390,18 @@ export function TetrisSkyline({
     triggerTopRows,
     columnClearAnimMs,
     palette,
+    contained,
   ])
 
   return (
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      style={{ position: 'fixed', inset: 0, zIndex: -1, pointerEvents: 'none' }}
+      style={
+        contained
+          ? { position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }
+          : { position: 'fixed', inset: 0, zIndex: -1, pointerEvents: 'none' }
+      }
     />
   )
 }

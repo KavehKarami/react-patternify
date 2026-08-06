@@ -1,4 +1,6 @@
 export interface TetrisSkylineProps {
+  contained?: boolean
+
   minCell?: number
   maxCell?: number
   preferredCell?: number
