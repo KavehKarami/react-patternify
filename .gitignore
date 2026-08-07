@@ -1,3 +1,5 @@
 node_modules
 dist
 *.tsbuildinfo
+playground/dist
+playground/node_modules

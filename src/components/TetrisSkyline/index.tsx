@@ -142,9 +142,10 @@ export function TetrisSkyline({
       const minH = Math.max(1, Math.round(targetRows * 0.55))
       const maxH = Math.max(minH + 1, targetRows)
 
+      const roughness = Math.round(terrainRoughness)
       heights[0] = clamp(Math.round((minH + maxH) / 2), minH, maxH)
       for (let col = 1; col < cols; col++) {
-        const step = randInt(terrainRoughness * 2 + 1) - terrainRoughness
+        const step = randInt(roughness * 2 + 1) - roughness
         heights[col] = clamp(heights[col - 1] + step, minH, maxH)
       }
 
