@@ -103,7 +103,6 @@ export function TetrisSkyline({
   maxActivePieces = 7,
   initialTerrainPercent = 0.2,
   terrainRoughness = 2,
-  holeChance = 0.008,
   topChipsChance = 0.05,
   triggerTopRows = 2,
   columnClearAnimMs = 260,
@@ -149,18 +148,106 @@ export function TetrisSkyline({
         heights[col] = clamp(heights[col - 1] + step, minH, maxH)
       }
 
+      // Boolean occupancy map from height profile, with chips and holes pre-punched
+      // so piece placement never straddles a gap and leaves isolated single cells
+      const inTerrain: boolean[][] = Array.from({ length: rows }, () => new Array(cols).fill(false) as boolean[])
+      for (let col = 0; col < cols; col++)
+        for (let row = rows - heights[col]; row < rows; row++) inTerrain[row][col] = true
+
       for (let col = 0; col < cols; col++) {
-        const columnHeight = heights[col]
-        const startRow = rows - columnHeight
-        for (let row = Math.max(0, startRow); row < rows; row++) grid[row][col] = palette[randInt(palette.length)]
+        const startRow = rows - heights[col]
         for (let chipOffset = 0; chipOffset < 2; chipOffset++) {
           const row = startRow + chipOffset
-          if (row >= 0 && row < rows && Math.random() < topChipsChance) grid[row][col] = 0
+          if (row >= 0 && row < rows && Math.random() < topChipsChance) inTerrain[row][col] = false
         }
-        for (let row = Math.max(0, startRow + 2); row < rows - 1; row++) {
-          if (Math.random() < holeChance) {
-            grid[row][col] = 0
-            if (Math.random() < 0.35 && col + 1 < cols) grid[row][col + 1] = 0
+      }
+
+      // Flood-fill from bottom row to remove cells disconnected from the ground
+      const connected: boolean[][] = Array.from({ length: rows }, () => new Array(cols).fill(false) as boolean[])
+      const queue: [number, number][] = []
+      for (let col = 0; col < cols; col++) {
+        if (inTerrain[rows - 1][col]) {
+          connected[rows - 1][col] = true
+          queue.push([rows - 1, col])
+        }
+      }
+      while (queue.length > 0) {
+        const [currentRow, currentCol] = queue.shift()!
+        for (const [rowDelta, colDelta] of [
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1],
+        ] as const) {
+          const neighbourRow = currentRow + rowDelta
+          const neighbourCol = currentCol + colDelta
+          if (
+            neighbourRow >= 0 &&
+            neighbourRow < rows &&
+            neighbourCol >= 0 &&
+            neighbourCol < cols &&
+            inTerrain[neighbourRow][neighbourCol] &&
+            !connected[neighbourRow][neighbourCol]
+          ) {
+            connected[neighbourRow][neighbourCol] = true
+            queue.push([neighbourRow, neighbourCol])
+          }
+        }
+      }
+      for (let row = 0; row < rows; row++)
+        for (let col = 0; col < cols; col++) if (!connected[row][col]) inTerrain[row][col] = false
+
+      // Precompute all unique rotations for every shape and their filled-cell offsets
+      const variantCells: [number, number][][] = []
+      for (const shape of SHAPES) {
+        const seen = new Set<string>()
+        let currentRotation = shape
+        for (let rotationIndex = 0; rotationIndex < 4; rotationIndex++) {
+          const key = JSON.stringify(currentRotation)
+          if (!seen.has(key)) {
+            seen.add(key)
+            const cells: [number, number][] = []
+            for (let shapeRow = 0; shapeRow < currentRotation.length; shapeRow++)
+              for (let shapeCol = 0; shapeCol < currentRotation[shapeRow].length; shapeCol++)
+                if (currentRotation[shapeRow][shapeCol] === 1) cells.push([shapeRow, shapeCol])
+            variantCells.push(cells)
+          }
+          currentRotation = rotateCW(currentRotation)
+        }
+      }
+
+      // Greedily fill terrain: for each unassigned cell, find a piece that covers it
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          if (!inTerrain[row][col] || grid[row][col] !== 0) continue
+
+          // Try variants in random order
+          const order = Array.from({ length: variantCells.length }, (_, i) => i).sort(() => Math.random() - 0.5)
+          let placed = false
+
+          for (const vi of order) {
+            const cells = variantCells[vi]
+            // Try placing the piece so that each of its cells lands on (row, col)
+            for (const [anchorDr, anchorDc] of cells) {
+              const startR = row - anchorDr
+              const startC = col - anchorDc
+              let fits = true
+              for (const [dr, dc] of cells) {
+                const r = startR + dr
+                const c = startC + dc
+                if (r < 0 || r >= rows || c < 0 || c >= cols || !inTerrain[r][c] || grid[r][c] !== 0) {
+                  fits = false
+                  break
+                }
+              }
+              if (fits) {
+                const color = palette[randInt(palette.length)]
+                for (const [dr, dc] of cells) grid[startR + dr][startC + dc] = color
+                placed = true
+                break
+              }
+            }
+            if (placed) break
           }
         }
       }
@@ -381,7 +468,6 @@ export function TetrisSkyline({
     maxActivePieces,
     initialTerrainPercent,
     terrainRoughness,
-    holeChance,
     topChipsChance,
     triggerTopRows,
     columnClearAnimMs,

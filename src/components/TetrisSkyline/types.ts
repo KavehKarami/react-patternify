@@ -15,7 +15,6 @@ export interface TetrisSkylineProps {
 
   initialTerrainPercent?: number
   terrainRoughness?: number
-  holeChance?: number
   topChipsChance?: number
 
   triggerTopRows?: number
