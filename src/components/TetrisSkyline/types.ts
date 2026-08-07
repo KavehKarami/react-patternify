@@ -13,9 +13,7 @@ export interface TetrisSkylineProps {
   spawnEveryMs?: number
   maxActivePieces?: number
 
-  terrainPx?: number
-  terrainMinRatio?: number
-  terrainMaxRatio?: number
+  initialTerrainPercent?: number
   terrainRoughness?: number
   holeChance?: number
   topChipsChance?: number

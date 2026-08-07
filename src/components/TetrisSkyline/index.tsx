@@ -101,9 +101,7 @@ export function TetrisSkyline({
   pieceDropMs = 90,
   spawnEveryMs = 520,
   maxActivePieces = 7,
-  terrainPx = 300,
-  terrainMinRatio = 0.28,
-  terrainMaxRatio = 0.55,
+  initialTerrainPercent = 0.2,
   terrainRoughness = 2,
   holeChance = 0.008,
   topChipsChance = 0.05,
@@ -138,13 +136,11 @@ export function TetrisSkyline({
     const makeGrid = (): Cell[][] => Array.from({ length: rows }, () => Array.from({ length: cols }, () => 0 as Cell))
 
     const buildTerrain = (grid: Cell[][]) => {
-      const targetRows = Math.round(terrainPx / cellSize)
-      const minRows = Math.round((canvasH * terrainMinRatio) / cellSize)
-      const maxRows = Math.round((canvasH * terrainMaxRatio) / cellSize)
-      const terrainRows = clamp(targetRows, minRows, maxRows)
+      if (initialTerrainPercent === 0) return
+      const targetRows = Math.round(initialTerrainPercent * rows)
       const heights: number[] = new Array(cols)
-      const minH = Math.max(4, Math.round(terrainRows * 0.55))
-      const maxH = Math.max(minH + 2, Math.round(terrainRows * 1.1))
+      const minH = Math.max(1, Math.round(targetRows * 0.55))
+      const maxH = Math.max(minH + 1, targetRows)
 
       heights[0] = clamp(Math.round((minH + maxH) / 2), minH, maxH)
       for (let col = 1; col < cols; col++) {
@@ -181,9 +177,9 @@ export function TetrisSkyline({
       } else {
         canvasW = window.innerWidth
         canvasH = window.innerHeight
-        canvas.style.width = `${canvasW}px`
-        canvas.style.height = `${canvasH}px`
       }
+      canvas.style.width = `${canvasW}px`
+      canvas.style.height = `${canvasH}px`
 
       canvas.width = Math.floor(canvasW * pixelRatio)
       canvas.height = Math.floor(canvasH * pixelRatio)
@@ -234,7 +230,8 @@ export function TetrisSkyline({
     }
 
     const markClearing = () => {
-      const band = clamp(triggerTopRows, 1, Math.max(1, rows - 1))
+      const visibleTopRow = Math.max(0, Math.ceil(-offsetY / cellSize))
+      const band = Math.max(visibleTopRow, clamp(triggerTopRows, 1, Math.max(1, rows - 1)))
       for (let col = 0; col < cols; col++) {
         if (clearing.has(col)) continue
         if (topRowInCol(col) <= band) clearing.set(col, 0)
@@ -381,9 +378,7 @@ export function TetrisSkyline({
     pieceDropMs,
     spawnEveryMs,
     maxActivePieces,
-    terrainPx,
-    terrainMinRatio,
-    terrainMaxRatio,
+    initialTerrainPercent,
     terrainRoughness,
     holeChance,
     topChipsChance,
