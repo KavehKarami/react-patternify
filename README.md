@@ -54,24 +54,22 @@ The canvas uses `position: absolute; inset: 0` and a `ResizeObserver` on the par
 
 #### Props
 
-| Prop                | Type       | Default                             | Description                                                     |
-| ------------------- | ---------- | ----------------------------------- | --------------------------------------------------------------- |
-| `contained`         | `boolean`  | `false`                             | Fill the nearest positioned parent instead of the full viewport |
-| `palette`           | `string[]` | `['#ff2d6d', '#a855f7', '#60a5fa']` | Block colors, cycled across pieces                              |
-| `bg`                | `string`   | `'#0b1220'`                         | Canvas background fill                                          |
-| `gridLine`          | `string`   | `'transparent'`                     | Cell border color                                               |
-| `minCell`           | `number`   | `16`                                | Minimum auto-calculated cell size (px)                          |
-| `maxCell`           | `number`   | `24`                                | Maximum auto-calculated cell size (px)                          |
-| `preferredCell`     | `number`   | `20`                                | Target cell size; clamped to min/max to minimize edge gaps      |
-| `cellGap`           | `number`   | `3`                                 | Gap between cells (px)                                          |
-| `pieceDropMs`       | `number`   | `90`                                | Time per one-cell drop (ms) — lower is faster                   |
-| `spawnEveryMs`      | `number`   | `520`                               | Interval between new piece spawns (ms)                          |
-| `maxActivePieces`   | `number`   | `7`                                 | Max pieces falling at once                                      |
-| `terrainPx`         | `number`   | `300`                               | Target terrain height from the bottom (px)                      |
-| `terrainMinRatio`   | `number`   | `0.28`                              | Minimum terrain height as a fraction of container height        |
-| `terrainMaxRatio`   | `number`   | `0.55`                              | Maximum terrain height as a fraction of container height        |
-| `terrainRoughness`  | `number`   | `2`                                 | Skyline jaggedness — higher values create more variation        |
-| `holeChance`        | `number`   | `0.008`                             | Per-cell probability of an interior hole in the terrain         |
-| `topChipsChance`    | `number`   | `0.05`                              | Per-cell probability of a surface notch on the terrain          |
-| `triggerTopRows`    | `number`   | `2`                                 | Stack height (in rows from top) that triggers a column reset    |
-| `columnClearAnimMs` | `number`   | `260`                               | Duration of the column fade-out animation (ms)                  |
+| Prop                    | Type       | Default                             | Description                                                                         |
+| ----------------------- | ---------- | ----------------------------------- | ----------------------------------------------------------------------------------- |
+| `contained`             | `boolean`  | `false`                             | Fill the nearest positioned parent instead of the full viewport                     |
+| `palette`               | `string[]` | `['#ff2d6d', '#a855f7', '#60a5fa']` | Block colors, cycled across pieces                                                  |
+| `bg`                    | `string`   | `'#0b1220'`                         | Canvas background fill                                                              |
+| `gridLine`              | `string`   | `'transparent'`                     | Cell border color                                                                   |
+| `minCell`               | `number`   | `16`                                | Minimum auto-calculated cell size (px)                                              |
+| `maxCell`               | `number`   | `24`                                | Maximum auto-calculated cell size (px)                                              |
+| `preferredCell`         | `number`   | `20`                                | Target cell size; clamped to min/max to minimize edge gaps                          |
+| `cellGap`               | `number`   | `3`                                 | Gap between cells (px)                                                              |
+| `pieceDropMs`           | `number`   | `90`                                | Time per one-cell drop (ms) — lower is faster                                       |
+| `spawnEveryMs`          | `number`   | `520`                               | Interval between new piece spawns (ms)                                              |
+| `maxActivePieces`       | `number`   | `7`                                 | Max pieces falling at once                                                          |
+| `initialTerrainPercent` | `number`   | `0.2`                               | Initial terrain height as a fraction of total rows (0 = no terrain) between 0 and 1 |
+| `terrainRoughness`      | `number`   | `2`                                 | Skyline jaggedness — higher values create more variation                            |
+| `holeChance`            | `number`   | `0.008`                             | Per-cell probability of an interior hole in the terrain                             |
+| `topChipsChance`        | `number`   | `0.05`                              | Per-cell probability of a surface notch on the terrain                              |
+| `triggerTopRows`        | `number`   | `2`                                 | Stack height (in rows from top) that triggers a column reset                        |
+| `columnClearAnimMs`     | `number`   | `260`                               | Duration of the column fade-out animation (ms)                                      |
