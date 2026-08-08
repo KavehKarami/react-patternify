@@ -1,6 +1,11 @@
 # react-patternify
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm version](https://img.shields.io/npm/v/react-patternify)](https://www.npmjs.com/package/react-patternify)
+
 Animated canvas background patterns for React. Drop a component into your layout and get a self-contained, GPU-friendly animated background, no dependencies beyond React, no DOM overhead, fully customizable via props.
+
+## **[Live demo](https://react-patternify.ydkjs.com)**
 
 ## Install
 
