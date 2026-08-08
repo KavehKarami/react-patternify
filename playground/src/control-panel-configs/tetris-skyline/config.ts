@@ -30,7 +30,7 @@ const config: ComponentConfig = {
     { key: 'gridLine', label: 'Grid line color', type: 'color', group: 'Appearance' },
     { key: 'palette', label: 'Piece colors', type: 'palette', group: 'Appearance' },
 
-    { key: 'pieceDropMs', label: 'Drop speed (ms)', type: 'number', min: 20, max: 2000, step: 10, group: 'Timing' },
+    { key: 'pieceDropMs', label: 'Drop interval (ms)', type: 'number', min: 20, max: 2000, step: 10, group: 'Timing' },
     {
       key: 'spawnEveryMs',
       label: 'Spawn interval (ms)',

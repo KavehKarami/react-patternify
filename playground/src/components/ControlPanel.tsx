@@ -2,8 +2,9 @@ import { useState, useMemo } from 'react'
 import type { RegistryEntry } from '../registry'
 import type { NumberControl, PropControl } from './ControlPanel.interface'
 
-interface Props {
+interface IProps {
   entry: RegistryEntry
+  isPanelOpen: boolean
   currentProps: Record<string, unknown>
   onPropChange: (key: string, value: unknown) => void
   onClose: () => void
@@ -159,7 +160,7 @@ function PaletteInput({ value, onChange }: { value: string[]; onChange: (v: stri
   )
 }
 
-export default function ControlPanel({ entry, currentProps, onPropChange, onClose }: Props) {
+export default function ControlPanel({ entry, currentProps, isPanelOpen, onPropChange, onClose }: IProps) {
   const [copied, setCopied] = useState(false)
   const { config } = entry
   const groups = useMemo(() => groupBy(config.controls), [config.controls])
@@ -176,13 +177,15 @@ export default function ControlPanel({ entry, currentProps, onPropChange, onClos
   }
 
   return (
-    <div className="panel-slide-in absolute right-0 top-0 h-full w-80 z-10 flex flex-col bg-black/92 backdrop-blur-xl border-l border-white/8">
+    <div
+      className={`${isPanelOpen ? 'translate-x-0' : 'translate-x-full'} transition absolute right-0 top-0 h-full w-80 z-100 flex flex-col bg-black/92 backdrop-blur-xl border-l border-white/8`}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/8 shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/8 shrink-0 ">
         <span className="text-sm font-medium text-white/80">Controls</span>
         <button
           onClick={onClose}
-          className="w-7 h-7 flex items-center justify-center rounded text-white/35 hover:text-white hover:bg-white/8 text-lg leading-none transition-colors"
+          className="cursor-pointer w-7 h-7 flex items-center justify-center rounded text-white/35 hover:text-white hover:bg-white/8 text-lg leading-none transition-colors"
         >
           ×
         </button>

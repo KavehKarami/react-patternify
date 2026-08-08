@@ -1,6 +1,6 @@
 {
   "name": "react-patternify",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Animated canvas background patterns for React",
   "author": "Kaveh Karami",
   "license": "MIT",
@@ -8,7 +8,7 @@
     "type": "git",
     "url": "https://github.com/KavehKarami/react-patternify"
   },
-  "homepage": "https://github.com/KavehKarami/react-patternify#readme",
+  "homepage": "https://react-patternify.ydkjs.com",
   "bugs": {
     "url": "https://github.com/KavehKarami/react-patternify/issues"
   },

@@ -1,31 +1,19 @@
 import { useState } from 'react'
 import { registry, RegistryEntry } from './registry'
 import ControlPanel from './components/ControlPanel'
-
-function SlidersIcon() {
-  return (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.75}
-        d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"
-      />
-    </svg>
-  )
-}
+import { MdOutlineSettings } from 'react-icons/md'
 
 export default function App() {
   const [selected, setSelected] = useState<RegistryEntry>(registry[0])
   const [currentProps, setCurrentProps] = useState<Record<string, unknown>>(registry[0].initialProps ?? {})
-  const [panelOpen, setPanelOpen] = useState(false)
+  const [isPanelOpen, setIsPanelOpen] = useState(false)
 
   const Component = selected.component
 
   function handleSelect(entry: RegistryEntry) {
     setSelected(entry)
     setCurrentProps(entry.initialProps ?? {})
-    setPanelOpen(false)
+    setIsPanelOpen(false)
   }
 
   function handlePropChange(key: string, value: unknown) {
@@ -66,28 +54,26 @@ export default function App() {
 
         {/* Controls toggle button */}
         <button
-          onClick={() => setPanelOpen((p) => !p)}
+          onClick={() => setIsPanelOpen((p) => !p)}
           className={[
-            'absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-2 rounded-full',
-            'border transition-all text-sm font-medium backdrop-blur-md',
-            panelOpen
+            'absolute top-4 right-4 z-20 flex items-center gap-1 px-3 py-2 rounded-full cursor-pointer border transition-all text-sm font-medium backdrop-blur-md',
+            isPanelOpen
               ? 'bg-white/12 border-white/20 text-white'
               : 'bg-black/55 border-white/10 text-white/60 hover:text-white hover:bg-black/70 hover:border-white/15',
           ].join(' ')}
         >
-          <SlidersIcon />
+          <MdOutlineSettings />
           <span>Controls</span>
         </button>
 
         {/* Control panel */}
-        {panelOpen && (
-          <ControlPanel
-            entry={selected}
-            currentProps={currentProps}
-            onPropChange={handlePropChange}
-            onClose={() => setPanelOpen(false)}
-          />
-        )}
+        <ControlPanel
+          entry={selected}
+          currentProps={currentProps}
+          isPanelOpen={isPanelOpen}
+          onPropChange={handlePropChange}
+          onClose={() => setIsPanelOpen(false)}
+        />
       </div>
     </div>
   )
