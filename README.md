@@ -70,5 +70,4 @@ The canvas uses `position: absolute; inset: 0` and a `ResizeObserver` on the par
 | `initialTerrainPercent` | `number`   | `0.2`                               | Initial terrain height as a fraction of total rows (0 = no terrain) between 0 and 1 |
 | `terrainRoughness`      | `number`   | `2`                                 | Skyline jaggedness — higher values create more variation                            |
 | `topChipsChance`        | `number`   | `0.05`                              | Per-cell probability of a surface notch on the terrain                              |
-| `triggerTopRows`        | `number`   | `2`                                 | Stack height (in rows from top) that triggers a column reset                        |
 | `columnClearAnimMs`     | `number`   | `260`                               | Duration of the column fade-out animation (ms)                                      |

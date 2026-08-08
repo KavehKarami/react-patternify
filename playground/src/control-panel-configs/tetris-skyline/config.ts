@@ -15,7 +15,6 @@ const config: ComponentConfig = {
     initialTerrainPercent: 0.2,
     terrainRoughness: 2,
     topChipsChance: 0.05,
-    triggerTopRows: 2,
     columnClearAnimMs: 260,
     palette: ['#ff2d6d', '#a855f7', '#60a5fa'],
   },
@@ -52,7 +51,6 @@ const config: ComponentConfig = {
     },
 
     { key: 'maxActivePieces', label: 'Max active pieces', type: 'number', min: 1, max: 30, step: 1, group: 'Gameplay' },
-    { key: 'triggerTopRows', label: 'Trigger rows', type: 'number', min: 1, max: 10, step: 1, group: 'Gameplay' },
 
     {
       key: 'initialTerrainPercent',

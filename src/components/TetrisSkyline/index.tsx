@@ -104,7 +104,6 @@ export function TetrisSkyline({
   initialTerrainPercent = 0.2,
   terrainRoughness = 2,
   topChipsChance = 0.05,
-  triggerTopRows = 2,
   columnClearAnimMs = 260,
   palette = DEFAULT_PALETTE,
 }: TetrisSkylineProps) {
@@ -318,11 +317,9 @@ export function TetrisSkyline({
     }
 
     const markClearing = () => {
-      const visibleTopRow = Math.max(0, Math.ceil(-offsetY / cellSize))
-      const band = Math.max(visibleTopRow, clamp(triggerTopRows, 1, Math.max(1, rows - 1)))
       for (let col = 0; col < cols; col++) {
         if (clearing.has(col)) continue
-        if (topRowInCol(col) <= band) clearing.set(col, 0)
+        if (topRowInCol(col) === 0) clearing.set(col, 0)
       }
     }
 
@@ -469,7 +466,6 @@ export function TetrisSkyline({
     initialTerrainPercent,
     terrainRoughness,
     topChipsChance,
-    triggerTopRows,
     columnClearAnimMs,
     palette,
     contained,

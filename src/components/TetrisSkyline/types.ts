@@ -17,7 +17,6 @@ export interface TetrisSkylineProps {
   terrainRoughness?: number
   topChipsChance?: number
 
-  triggerTopRows?: number
   columnClearAnimMs?: number
 
   palette?: string[]
