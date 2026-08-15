@@ -36,7 +36,7 @@ export default function App() {
               key={entry.id}
               onClick={() => handleSelect(entry)}
               className={[
-                'w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                'w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer',
                 selected.id === entry.id
                   ? 'bg-white/12 text-white'
                   : 'text-white/45 hover:text-white/75 hover:bg-white/6',
