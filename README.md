@@ -130,3 +130,55 @@ export default function Hero() {
 | `maxActivePieces` | `number`   | `7`                                 | Max pieces falling at once                                      |
 | `rowClearAnimMs`  | `number`   | `260`                               | Duration of the row fade-out animation (ms)                     |
 | `rowShiftAnimMs`  | `number`   | `180`                               | Duration of the rows-above sliding down after a clear (ms)      |
+
+---
+
+### `Matrix`
+
+A Matrix-style digital rain animation. Streams of randomly mutating characters fall from the top of the canvas to the bottom, each with a glowing head and a fading trail. Streams restart at randomized intervals to keep the animation organic.
+
+#### Full-viewport background (default)
+
+```tsx
+import { Matrix } from 'react-patternify'
+
+export default function App() {
+  return (
+  return (
+    <>
+      <Matrix />
+      {/* your content */}
+    </>
+  )
+}
+```
+
+#### Contained mode
+
+```tsx
+import { Matrix } from 'react-patternify'
+
+export default function Hero() {
+  return (
+    <section style={{ position: 'relative', height: '400px', overflow: 'hidden' }}>
+      <Matrix contained />
+      <h1 style={{ position: 'relative' }}>Hello</h1>
+    </section>
+  )
+}
+```
+
+#### Props
+
+| Prop            | Type      | Default                        | Description                                                              |
+| --------------- | --------- | ------------------------------ | ------------------------------------------------------------------------ |
+| `contained`     | `boolean` | `false`                        | Fill the nearest positioned parent instead of the full viewport          |
+| `bg`            | `string`  | `'#060606'`                    | Canvas background fill                                                   |
+| `color`         | `string`  | `'#00FF41'`                    | Trail character color                                                    |
+| `headColor`     | `string`  | `'#9BE9A8'`                    | Leading character color (brightest point of each stream)                 |
+| `fontSize`      | `number`  | `14`                           | Character size in pixels; controls column density                        |
+| `speed`         | `number`  | `20`                           | Fall speed in rows per second                                            |
+| `density`       | `number`  | `0.65`                         | Fraction of columns that are active at once (0–1)                        |
+| `trailLength`   | `number`  | `40`                           | Number of visible characters behind the head                             |
+| `fontFamily`    | `string`  | `'inherit'`                    | CSS font-family for characters; resolves to the canvas element's computed font |
+| `charset`       | `string`  | ASCII letters, digits, symbols | Pool of characters drawn randomly in each stream                         |

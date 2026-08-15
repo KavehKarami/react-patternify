@@ -1,8 +1,9 @@
 import { ComponentType } from 'react'
-import { TetrisSkyline, Tetris } from 'react-patternify'
+import { TetrisSkyline, Tetris, Matrix } from 'react-patternify'
 import type { ComponentConfig } from './components/ControlPanel.interface'
 import tetrisSkylineConfig from './control-panel-configs/tetris-skyline/config'
 import tetrisConfig from './control-panel-configs/tetris/config'
+import MatrixConfig from './control-panel-configs/matrix/config'
 
 export interface RegistryEntry {
   id: string
@@ -26,6 +27,13 @@ export const registry: RegistryEntry[] = [
     name: 'Tetris',
     component: Tetris,
     config: tetrisConfig,
+    initialProps: { contained: false },
+  },
+  {
+    id: 'matrix',
+    name: 'Matrix',
+    component: Matrix,
+    config: MatrixConfig,
     initialProps: { contained: false },
   },
 ]
